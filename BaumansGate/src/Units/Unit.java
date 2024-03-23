@@ -96,8 +96,8 @@ public class Unit {
         return fines.get(skin);
     }
 
-    public boolean isWasAttacker() {
-        return wasAttacker;
+    public boolean isCanAttack() {
+        return !wasAttacker && damage != 0;
     }
 
     public void setWasAttacker(boolean wasAttacker) {

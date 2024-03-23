@@ -35,17 +35,17 @@ public class GameProcess {
         System.out.println(battlefield);
 
         while (true) {
+            if (player.getNumberOfUnits() == 0) {
+                System.out.println("YOU LOSE(((");
+                break;
+            } else if (bot.getNumberOfUnits() == 0) {
+                System.out.println("YOU WON!!!");
+                break;
+            }
+
             System.out.println("new Turn");
             userTurn();
             botTurn();
-
-            if (bot.getNumberOfUnits() == 0) {
-                System.out.println("YOU WON!!!");
-                break;
-            } else if (player.getNumberOfUnits() == 0) {
-                System.out.println("YOU LOSE(((");
-                break;
-            }
         }
     }
 
@@ -73,6 +73,12 @@ public class GameProcess {
             }
 
         }
+
+        for (Unit u : bot.getUnits().values()) {
+            u.refillMovementCounter();
+            u.setWasAttacker(false);
+        }
+
         clearScreen();
         System.out.println(battlefield);
     }
@@ -83,7 +89,7 @@ public class GameProcess {
 
         outer:
         while (true) {
-            System.out.println("Choose Unit");
+            System.out.println("Choose Unit or print 0 to end your turn");
             for (Unit u : player.getUnits().values()) {
                 System.out.println(u.getStatsForTurn());
             }
@@ -96,6 +102,7 @@ public class GameProcess {
                 } catch (Exception e) {
                     continue;
                 }
+                if (chosen == '0') return;
                 if (player.getUnit(chosen) != null) {
                     currentUnit = player.getUnit(chosen);
                     canMove = currentUnit.getMovement() >= 1;
@@ -104,7 +111,7 @@ public class GameProcess {
             }
 
             System.out.println("Choose action\n" +
-                    ((!currentUnit.isWasAttacker()) ? "1. Attack\n" : "") +
+                    ((currentUnit.isCanAttack()) ? "1. Attack\n" : "") +
                     ((canMove) ? "2. Move\n" : "") +
                     "3. Back\n" +
                     "4. End turn");
@@ -116,7 +123,7 @@ public class GameProcess {
                     continue;
                 }
 
-                if (chosen == '1' && !currentUnit.isWasAttacker()) {
+                if (chosen == '1' && currentUnit.isCanAttack()) {
                     attackUnit(currentUnit, bot);
                     break;
                 } else if (chosen == '2' && canMove) {
@@ -142,7 +149,8 @@ public class GameProcess {
         HashMap<Character, Unit> enemyUnits = enemy.getUnits();
 
         for (Unit enemyUnit : enemyUnits.values()) {
-            delta = Math.max(Math.abs(enemyUnit.getPosI() - attackerPosI), Math.abs(enemyUnit.getPosJ() - attackerPosJ));
+            delta = Math.max(Math.abs(enemyUnit.getPosI() - attackerPosI),
+                             Math.abs(enemyUnit.getPosJ() - attackerPosJ));
             if (delta <= attackerUnit.getAttackRange()) {
                 isNoOneAttack = false;
                 System.out.println(enemyUnit.getStatsForTurn());

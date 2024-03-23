@@ -142,7 +142,6 @@ public class Battlefield {
         }
         result += String.format("%3s %s\n", " ", row);
 
-
         row = "";
         for (i = 1; i < this.size + 1; i++) row += " " + i % 10;
         result += String.format("%3d %s\n", 0, row);
