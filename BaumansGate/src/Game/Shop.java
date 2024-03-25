@@ -20,6 +20,7 @@ public class Shop {
                 new RiderArcher(),
                 new RiderCuirassier(),
                 new RiderKnight(),
+                new MageRaccoonNecromancer(),
         };
 
         System.out.printf("%30s | %4s | %4s | %4s | %4s | %4s | %4s | %4s%n",
@@ -47,7 +48,7 @@ public class Shop {
 
             if (i == 0) break;
             else if (i < 0 || i > assortment.length
-                    || user.getUnits().values().contains(assortment[i - 1])) continue;
+                    || user.getUnits().containsValue(assortment[i - 1])) continue;
 
             if (user.getNumberOfUnits() < fieldSize && user.getMoney() > assortment[i - 1].getCost()) {
                 user.addUnit(assortment[i - 1]);
@@ -75,12 +76,14 @@ public class Shop {
                 new RiderArcher(),
                 new RiderCuirassier(),
                 new RiderKnight(),
+                new MageRaccoonNecromancer(),
         };
 
         HashSet<Integer> chosen = new HashSet<>();
         Random random = new Random();
         int choose;
 
+//        for (int i = 0; i < 0; i++) {
         for (int i = 0; i < count; i++) {
             choose = random.nextInt(assortment.length);
             if (chosen.contains(choose)) {
@@ -93,5 +96,14 @@ public class Shop {
 
             bot.addUnit(assortment[choose]);
         }
+
+//        bot.addUnit(assortment[9]);
+//        assortment[9].makeEnemy();
+//        bot.addUnit(assortment[4]);
+//        assortment[4].makeEnemy();
+//        bot.addUnit(assortment[0]);
+//        assortment[0].makeEnemy();
+//        bot.addUnit(assortment[1]);
+//        assortment[1].makeEnemy();
     }
 }

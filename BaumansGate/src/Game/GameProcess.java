@@ -1,7 +1,11 @@
 package Game;
 
+import Units.Mage;
+import Units.MageRaccoonNecromancer;
 import Units.Unit;
+import Units.Walker;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
 
@@ -13,8 +17,11 @@ public class GameProcess {
 
     private static Battlefield battlefield;
 
+    private static ArrayList<ScheduleObject> schedule = new ArrayList<>();
     private static User player;
     private static Bot bot;
+
+    private static int stepCounter = 0;
 
     public static void clearScreen() { // Работает только в терминалах. В стандартной консоли Run очистка экрана не работает
         System.out.print("\033[H\033[2J");
@@ -35,6 +42,8 @@ public class GameProcess {
         System.out.println(battlefield);
 
         while (true) {
+            stepCounter++;
+
             if (player.getNumberOfUnits() == 0) {
                 System.out.println("YOU LOSE(((");
                 break;
@@ -43,10 +52,43 @@ public class GameProcess {
                 break;
             }
 
+            checkSchedule();
+
             System.out.println("new Turn");
             userTurn();
             botTurn();
         }
+    }
+
+    private static void checkSchedule () {
+        String makerName;
+
+        ArrayList<ScheduleObject> done = new ArrayList<>();
+
+        for (ScheduleObject so : schedule) {
+            makerName = so.maker.getClass().getSimpleName();
+            so.setDuration(so.getDuration() - 1);
+
+            System.out.println(so);
+
+            if (so.getDuration() != 0) continue;
+
+            if (makerName.equals(MageRaccoonNecromancer.class.getSimpleName())) {
+                ((MageRaccoonNecromancer) so.maker).reviveUnit(
+                        so.target,
+                        (so.isMakerEnemy()) ? player.getDeadUnits() : bot.getDeadUnits(),
+                        battlefield);
+                done.add(so);
+                ((Mage) so.maker).setCasting(false);
+            }
+        }
+
+        for (ScheduleObject so : done) {
+            schedule.remove(so);
+        }
+
+        clearScreen();
+        System.out.println(battlefield);
     }
 
     public static void botTurn() {
@@ -54,6 +96,25 @@ public class GameProcess {
         Unit closestUnit;
 
         for (Unit u : bot.getUnits().values()) {
+            if (u instanceof Mage) {
+                if (bot.getDeadUnits().size() != 0 && !((Mage) u).isCasting()) {
+                    Unit target = (Unit) bot.getDeadUnits().values().toArray()[0];
+
+                    ScheduleObject scheduleObject = new ScheduleObject(
+                            u,
+                            target,
+                            true,
+                            MageRaccoonNecromancer.durations.get(
+                                    target.getClass().getSuperclass().getSimpleName()
+                            )
+                    );
+
+                    ((Mage) u).setCasting(true);
+                    schedule.add(scheduleObject);
+                }
+                continue;
+            }
+
             closestUnit = battlefield.getClosestUnit(u, player.getUnits());
             kI = (int) Math.signum(1.0 * ((closestUnit.getPosI() - u.getPosI())));
             kJ = (int) Math.signum(1.0 * ((closestUnit.getPosJ() - u.getPosJ())));
@@ -102,7 +163,7 @@ public class GameProcess {
                 } catch (Exception e) {
                     continue;
                 }
-                if (chosen == '0') return;
+                if (chosen == '0') break outer;
                 if (player.getUnit(chosen) != null) {
                     currentUnit = player.getUnit(chosen);
                     canMove = currentUnit.getMovement() >= 1;
@@ -110,12 +171,21 @@ public class GameProcess {
                 }
             }
 
+            boolean isCasting = false;
+
             System.out.println("Choose action\n" +
                     ((currentUnit.isCanAttack()) ? "1. Attack\n" : "") +
                     ((canMove) ? "2. Move\n" : "") +
-                    "3. Back\n" +
-                    "4. End turn");
+                    ((currentUnit instanceof Mage) ? "3. Magick trick\n" : "") +
+                    "4. Back\n" +
+                    "5. End turn");
 
+            if (currentUnit instanceof Mage && ((Mage) currentUnit).isCasting()) {
+                isCasting = ((Mage) currentUnit).isCasting();
+                System.out.println("Casting the magick trick, if you move unit or attack casting will start again");
+            }
+
+            boolean actionMade = false;
             while (true) {
                 try {
                     chosen = sc.nextLine().charAt(0);
@@ -129,17 +199,86 @@ public class GameProcess {
                 } else if (chosen == '2' && canMove) {
                     moveUnit(currentUnit);
                     break;
-                } else if (chosen == '3') {
-                    continue outer;
+                } else if (chosen == '3' && !isCasting) {
+                    useMagicTrick((Mage) currentUnit);
+                    break;
                 } else if (chosen == '4') {
+                    continue outer;
+                } else if (chosen == '5') {
                     break outer;
                 }
+            }
+            if (isCasting) {
+                ((Mage) currentUnit).recast();
             }
         }
         for (Unit u : player.getUnits().values()) {
             u.refillMovementCounter();
             u.setWasAttacker(false);
         }
+    }
+
+    private static void useMagicTrick(Mage mage) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("What magic trick do you want to use?");
+
+        String[] magicTricks = mage.getMagicTricks();
+        for (int i = 0; i < magicTricks.length; i++) {
+            System.out.printf("%d. %s\n", i + 1, magicTricks[i]);
+        }
+
+        int chosenIndex = sc.nextInt();
+        while (true) {
+            System.out.println(chosenIndex);
+            if (0 < chosenIndex && chosenIndex <= magicTricks.length) break;
+
+            chosenIndex = sc.nextInt();
+        }
+
+        chosenIndex--;
+
+        System.out.println(magicTricks[chosenIndex]);
+
+        switch (magicTricks[chosenIndex]) {
+            case "Revive" -> {
+                HashMap<Character, Unit> deadUnits = player.getDeadUnits();
+                if (deadUnits.size() == 0) {
+                    System.out.println("No one to revive");
+                    break;
+                }
+
+                System.out.println("Who do you want to revive?");
+
+
+                for (Unit u : deadUnits.values()) {
+                    System.out.println(u);
+                }
+
+                char chosen = '-';
+
+                while (true) {
+                    chosen = sc.next().charAt(0);
+                    if (deadUnits.containsKey(chosen)) break;
+                }
+
+                Unit zombie = deadUnits.get(chosen);
+
+                ScheduleObject scheduleObject = new ScheduleObject(
+                        mage,
+                        zombie,
+                        false,
+                        MageRaccoonNecromancer.durations.get(
+                                zombie.getClass().getSuperclass().getSimpleName())
+                );
+
+                schedule.add(scheduleObject);
+
+                mage.setCasting(true);
+                mage.setCurrentCast(scheduleObject);
+            }
+        }
+        clearScreen();
+        System.out.println(battlefield);
     }
 
     public static void attackUnit(Unit attackerUnit, User enemy) {
@@ -248,7 +387,7 @@ public class GameProcess {
             System.out.println("How far?\n");
 
             int length, exitCode;
-            while (sc.hasNext()) {
+            while (true) {
                 length = sc.nextInt();
 
                 exitCode = battlefield.shiftUnit(unit, kI, kJ, length);

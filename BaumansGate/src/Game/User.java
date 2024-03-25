@@ -34,6 +34,16 @@ public class User {
 
         return units;
     }
+
+    public HashMap<Character, Unit> getDeadUnits() {
+        HashMap<Character, Unit> units = new HashMap<>();
+
+        for (Map.Entry<Character, Unit> entry : this.units.entrySet()) {
+            if (entry.getValue().getBufferHP() == 0) units.put(entry.getKey(), entry.getValue());
+        }
+
+        return units;
+    }
     public void addUnit(Unit unit) {
         units.put(unit.getSkin(), unit);
     }

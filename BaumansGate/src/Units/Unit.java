@@ -64,8 +64,24 @@ public class Unit {
         this.movementCounter -= cost;
     }
 
+    public int getHP() {
+        return HP;
+    }
+
+    public int getDefense() {
+        return defense;
+    }
+
     public int getBufferHP() {
         return bufferHP;
+    }
+
+    public void setBufferHP(int bufferHP) {
+        this.bufferHP = bufferHP;
+    }
+
+    public void setBufferDFNS(int bufferDFNS) {
+        this.bufferDFNS = bufferDFNS;
     }
 
     public void damage(int damage) {
@@ -158,7 +174,7 @@ public class Unit {
                 this.bufferHP,
                 this.bufferDFNS,
                 this.damage,
-                this.movement);
+                (int) Math.floor(this.movementCounter));
     }
 
     @Override

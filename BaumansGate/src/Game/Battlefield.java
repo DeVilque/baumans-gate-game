@@ -74,6 +74,45 @@ public class Battlefield {
         }
     }
 
+    public int placeUnit(Unit unit, int posI, int posJ) {
+        Cell cell = field.get(posI).get(posJ);
+        if (cell.getUnit() == null){
+            cell.setUnit(unit);
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+    public void placeElsewhere(Unit unit) {
+        Random random = new Random();
+        ArrayList<Cell> freeCells = getFreeCells(0, 0, size - 1, size - 1);
+        int randomI = random.nextInt(freeCells.size());
+
+        freeCells.get(randomI).setUnit(unit);
+    }
+
+    public ArrayList<Cell> getFreeCells(int posStartI, int posStartJ, int posEndI, int posEndJ) {
+        ArrayList<Cell> result = new ArrayList<>();
+
+        posStartI = Math.max(posStartI, 0);
+        posStartJ = Math.max(posStartJ, 0);
+        posEndI = Math.min(posEndI, size - 1);
+        posEndJ = Math.min(posEndJ, size - 1);
+
+        for (int i = posStartI; i <= posEndI; i++) {
+            ArrayList<Cell> row = field.get(i);
+            for (int j = posStartJ; j <= posEndJ; j++) {
+                Cell cell = row.get(j);
+                if (cell.getUnit() == null && cell.getSkin() == '*') {
+                    result.add(cell);
+                }
+            }
+        }
+
+        return result;
+    }
+
     public Unit getClosestUnit(Unit unit, HashMap<Character, Unit> units) {
         int posI = unit.getPosI(), posJ = unit.getPosJ(), length, lengthMin = size * 2;
 
